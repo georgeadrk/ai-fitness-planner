@@ -1,45 +1,116 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/Card";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
 
-function Home() {
+function Home({ darkMode, toggleDarkMode }) {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [stats, setStats] = useState({ workouts: 0, meals: 0 });
+
+  const workouts = [
+    { title: "Morning Run", description: "Run 3–5 km in the morning." },
+    { title: "HIIT Workout", description: "High intensity interval training." },
+    { title: "Yoga", description: "30 minutes of yoga stretches." },
+  ];
+
+  const meals = [
+    { title: "Breakfast", description: "Log your breakfast meal." },
+    { title: "Lunch", description: "Log your lunch meal." },
+    { title: "Dinner", description: "Log your dinner meal." },
+  ];
+
+  useEffect(() => {
+    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (!loggedInUser) return navigate("/login");
+
+    setUser(loggedInUser);
+
+    const updateStats = () => {
+      const allStats = JSON.parse(localStorage.getItem("userStats")) || {};
+      const userStats = allStats[loggedInUser.email] || {};
+      setStats({
+        workouts: workouts.filter(w => userStats[w.title]).length,
+        meals: meals.filter(m => userStats[`meal-${m.title}`]).length,
+      });
+    };
+
+    updateStats();
+    window.addEventListener("statsUpdated", updateStats);
+    return () => window.removeEventListener("statsUpdated", updateStats);
+  }, [navigate, workouts, meals]);
 
   const handleLogout = () => {
     localStorage.removeItem("loggedInUser");
-    navigate("/");
+    navigate("/login");
   };
 
-  // Example cards
-  const exampleCards = [
-    { title: "Morning Run", description: "5 km run around the park" },
-    { title: "HIIT Workout", description: "20 min high intensity" },
-  ];
+  const totalWorkouts = workouts.length;
+  const totalMeals = meals.length;
+  const workoutPercent = totalWorkouts ? Math.round((stats.workouts / totalWorkouts) * 100) : 0;
+  const mealPercent = totalMeals ? Math.round((stats.meals / totalMeals) * 100) : 0;
+
+  if (!user) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <Navbar onLogout={handleLogout} />
+    <div className={`min-h-screen transition-colors ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
+      <header className={`p-6 flex justify-between items-center ${darkMode ? "bg-gray-800" : "bg-gray-200"}`}>
+        <h1 className="text-xl font-semibold">Welcome, {user.email.split("@")[0]}</h1>
+        <div className="flex gap-4">
+          <button
+            onClick={toggleDarkMode}
+            className="px-4 py-2 rounded bg-indigo-500 text-white hover:bg-indigo-600 transition"
+          >
+            {darkMode ? "Light Mode" : "Dark Mode"}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
 
-      {/* Welcome Section */}
-      <section className="py-16 px-6 text-center bg-indigo-600 text-white rounded-b-3xl">
-        <h1 className="text-4xl font-bold mb-2">Welcome, George!</h1>
-        <p className="text-lg text-indigo-100">
-          Track your workouts, meals, and progress all in one place.
-        </p>
-      </section>
+      <main className="p-6 max-w-6xl mx-auto space-y-8">
+        {/* Progress Section */}
+        <section className={`p-6 rounded-xl shadow space-y-4 ${darkMode ? "bg-gray-800" : "bg-gray-200"}`}>
+          <div>
+            <h3 className="font-semibold">Workouts Completed</h3>
+            <div className={`${darkMode ? "bg-gray-600" : "bg-gray-400"} w-full h-4 rounded-full mt-1`}>
+              <div className="bg-indigo-500 h-4 rounded-full transition-all" style={{ width: `${workoutPercent}%` }} />
+            </div>
+            <p className="text-right text-sm mt-1">{stats.workouts} / {totalWorkouts} ({workoutPercent}%)</p>
+          </div>
 
-      {/* Card Grid */}
-      <section className="py-10 px-6 max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        {exampleCards.map((card, index) => (
-          <Card key={index} title={card.title} description={card.description} />
-        ))}
-      </section>
+          <div>
+            <h3 className="font-semibold">Meals Logged</h3>
+            <div className={`${darkMode ? "bg-gray-600" : "bg-gray-400"} w-full h-4 rounded-full mt-1`}>
+              <div className="bg-green-500 h-4 rounded-full transition-all" style={{ width: `${mealPercent}%` }} />
+            </div>
+            <p className="text-right text-sm mt-1">{stats.meals} / {totalMeals} ({mealPercent}%)</p>
+          </div>
+        </section>
 
-      {/* Footer */}
-      <Footer />
+        {/* Workouts */}
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">Workouts</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {workouts.map((w, idx) => (
+              <Card key={idx} title={w.title} description={w.description} type="workout" darkMode={darkMode} />
+            ))}
+          </div>
+        </section>
+
+        {/* Meals */}
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">Meal Plans</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {meals.map((m, idx) => (
+              <Card key={idx} title={m.title} description={m.description} type="meal" darkMode={darkMode} />
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
