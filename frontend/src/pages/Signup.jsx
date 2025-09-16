@@ -1,39 +1,59 @@
-import { useState } from "react";
-import API from "../api";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function Signup() {
-  const [form, setForm] = useState({ username: "", password: "" });
+function Signup() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await API.post("/auth/signup", form);
-      alert(`User ${res.data.username} created!`);
-    } catch (err) {
-      alert(err.response.data.detail);
-    }
-  };
+  const handleSignup = (e) => {
+  e.preventDefault();
+
+  // Get existing users from localStorage
+  const storedUsers = JSON.parse(localStorage.getItem("users")) || [];
+
+  // Add new user
+  const newUser = { email, password, role: "user" };
+  localStorage.setItem("users", JSON.stringify([...storedUsers, newUser]));
+
+  alert("Account created!");
+  navigate("/");
+};
 
   return (
-    <div className="flex flex-col items-center mt-10">
-      <h1 className="text-2xl font-bold">Signup</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-64">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form
+        onSubmit={handleSignup}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-md"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">
+          Sign Up
+        </h2>
         <input
-          type="text"
-          placeholder="Username"
-          value={form.username}
-          onChange={(e) => setForm({ ...form, username: e.target.value })}
-          className="border p-2 rounded"
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+          required
         />
         <input
           type="password"
           placeholder="Password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          className="border p-2 rounded"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-3 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+          required
         />
-        <button className="bg-blue-500 text-white p-2 rounded">Sign Up</button>
+        <button
+          type="submit"
+          className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+        >
+          Sign Up
+        </button>
       </form>
     </div>
   );
 }
+
+export default Signup;

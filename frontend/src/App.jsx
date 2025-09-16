@@ -1,20 +1,19 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import Planner from "./pages/Planner";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
     <Router>
-      <nav className="p-4 bg-blue-600 text-white flex gap-4">
-        <Link to="/">Home</Link>
-        <Link to="/planner">Planner</Link>
-      </nav>
-      <div className="p-6">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/planner" element={<Planner />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Routes>
     </Router>
   );
 }
